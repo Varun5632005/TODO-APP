@@ -78,7 +78,12 @@ app.get("/refresh",verifyToken,async (req,res)=>{
   res.status(200).json({message:"user verified",payload:userObj})
 })
 
-// Catch-all route to serve the React app for any other request (for client-side routing)
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-});
+// Catch-all route to serve the React app (only in environments where frontend is co-located)
+import { existsSync } from 'fs';
+const frontendDistPath = path.join(__dirname, '../frontend/dist/index.html');
+if (existsSync(frontendDistPath)) {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  app.use((req, res) => {
+    res.sendFile(frontendDistPath);
+  });
+}
