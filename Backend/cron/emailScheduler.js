@@ -1,0 +1,100 @@
+import cron from 'node-cron';
+import nodemailer from 'nodemailer';
+import { UserModel } from '../models/UserModel.js';
+import 'dotenv/config';
+
+// Setup nodemailer transport
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+// Run every minute
+const startEmailScheduler = () => {
+  cron.schedule('* * * * *', async () => {
+    try {
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.log('Skipping email scheduler: EMAIL_USER or EMAIL_PASS not configured in .env');
+        return;
+      }
+
+      console.log('Checking for tasks due soon...');
+      
+      const now = new Date();
+      const sixtyMinutesFromNow = new Date(now.getTime() + 60 * 60000);
+      const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60000);
+
+      // Find users with tasks that are pending, haven't been notified, and due between 5 and 60 mins
+      const users = await UserModel.find({
+        "todos": {
+          $elemMatch: {
+            status: "pending",
+            notificationSent: false,
+            dueDate: {
+              $gte: fiveMinutesFromNow,
+              $lte: sixtyMinutesFromNow
+            }
+          }
+        }
+      });
+
+      for (let user of users) {
+        let tasksUpdated = false;
+
+        for (let todo of user.todos) {
+          if (
+            todo.status === "pending" && 
+            !todo.notificationSent && 
+            todo.dueDate && 
+            todo.dueDate >= fiveMinutesFromNow && 
+            todo.dueDate <= sixtyMinutesFromNow
+          ) {
+            
+            // Calculate exact minutes left
+            const minutesLeft = Math.round((todo.dueDate - now) / 60000);
+
+            // Send email
+            const mailOptions = {
+              from: `"TaskMaster" <${process.env.EMAIL_USER}>`,
+              to: user.email,
+              subject: `Reminder: Task "${todo.taskName}" starts in ${minutesLeft} minutes!`,
+              html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                  <h2 style="color: #6366f1;">TaskMaster Reminder ⏰</h2>
+                  <p>Hi ${user.name},</p>
+                  <p>This is a friendly reminder that your task is starting soon.</p>
+                  <div style="background: #f8fafc; padding: 15px; border-left: 4px solid #6366f1; margin: 20px 0;">
+                    <h3 style="margin: 0 0 10px 0;">${todo.taskName}</h3>
+                    <p style="margin: 0;"><strong>Description:</strong> ${todo.description}</p>
+                    <p style="margin: 10px 0 0 0;"><strong>Due:</strong> ${todo.dueDate.toLocaleString()}</p>
+                  </div>
+                  <p>Log in to TaskMaster to mark it as completed!</p>
+                </div>
+              `
+            };
+
+            await transporter.sendMail(mailOptions);
+            console.log(`Email sent to ${user.email} for task ${todo.taskName}`);
+
+            // Mark as sent
+            todo.notificationSent = true;
+            tasksUpdated = true;
+          }
+        }
+
+        // Save the user document if we modified any tasks
+        if (tasksUpdated) {
+          await user.save();
+        }
+      }
+    } catch (error) {
+      console.error('Error in email scheduler:', error);
+    }
+  });
+  console.log('Email scheduler started.');
+};
+
+export default startEmailScheduler;
