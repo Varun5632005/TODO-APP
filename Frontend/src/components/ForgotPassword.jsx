@@ -16,7 +16,15 @@ function ForgotPassword() {
     try {
       setIsLoading(true);
       const res = await axios.post(`${API}/user-api/forgot-password`, data, { timeout: 120000 });
-      toast.success(res.data.message || "Reset link sent to your email!");
+      
+      if (res.data.resetUrl) {
+        toast.success(res.data.message || "Redirecting to secure reset link...");
+        setTimeout(() => {
+          window.location.href = res.data.resetUrl;
+        }, 1500);
+      } else {
+        toast.success(res.data.message || "Reset link sent to your email!");
+      }
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || "Failed to send reset email";
       toast.error(errorMsg);

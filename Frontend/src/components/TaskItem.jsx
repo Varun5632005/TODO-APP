@@ -32,7 +32,7 @@ const TaskItem = React.memo(({ todoObj, openModal, deleteTask, setTaskCompleted 
       }}
       className="task-card-hover"
     >
-      <div className="task-item-flex" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', gap: '10px' }}>
+      <div className="task-item-header" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', flex: '1 1 auto', minWidth: '200px' }}>
           <div style={{ marginTop: '2px' }}>
             {todoObj.status === 'completed' ? 
@@ -45,7 +45,7 @@ const TaskItem = React.memo(({ todoObj, openModal, deleteTask, setTaskCompleted 
           </h3>
         </div>
         
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="task-item-actions" style={{ display: 'flex', gap: '8px' }}>
           <button 
             onClick={() => openModal(todoObj)} 
             style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}
