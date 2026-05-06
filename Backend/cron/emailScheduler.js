@@ -7,12 +7,7 @@ import http from 'http';
 
 // Setup nodemailer transport
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
@@ -31,18 +26,16 @@ const startEmailScheduler = () => {
       const now = new Date();
       console.log(`[${now.toISOString()}] Checking for tasks due soon...`);
       
-      // Tasks due in the next 60 minutes, or that were due in the last 10 minutes
       const sixtyMinutesFromNow = new Date(now.getTime() + 60 * 60000);
-      const tenMinutesAgo = new Date(now.getTime() - 10 * 60000);
 
-      // Find users with tasks that are pending, haven't been notified, and due between -10 and 60 mins
+      // Find users with tasks that are pending, haven't been notified, and due in the next 60 mins
       const users = await UserModel.find({
         "todos": {
           $elemMatch: {
             status: "pending",
-            notificationSent: { $ne: true }, // Not sent yet
+            notificationSent: { $ne: true },
             dueDate: {
-              $gte: tenMinutesAgo,
+              $gt: now,
               $lte: sixtyMinutesFromNow
             }
           }
@@ -57,20 +50,18 @@ const startEmailScheduler = () => {
             todo.status === "pending" && 
             todo.notificationSent !== true && 
             todo.dueDate && 
-            todo.dueDate >= tenMinutesAgo && 
+            todo.dueDate > now && 
             todo.dueDate <= sixtyMinutesFromNow
           ) {
             
-            // Calculate exact minutes left (can be negative if just passed)
-            const diffMs = todo.dueDate - now;
-            const minutesLeft = Math.round(diffMs / 60000);
-            const timePhrase = minutesLeft >= 0 ? `starts in ${minutesLeft} minutes` : `started ${Math.abs(minutesLeft)} minutes ago`;
+            // Calculate exact minutes left
+            const minutesLeft = Math.round((todo.dueDate - now) / 60000);
 
             // Send email
             const mailOptions = {
               from: `"TaskMaster" <${process.env.EMAIL_USER}>`,
               to: user.email,
-              subject: `Reminder: Task "${todo.taskName}" ${timePhrase}!`,
+              subject: `Reminder: Task "${todo.taskName}" starts in ${minutesLeft} minutes!`,
               html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
                   <h2 style="color: #6366f1;">TaskMaster Reminder ⏰</h2>
