@@ -34,7 +34,7 @@ function Login() {
   }, [loginStatus, navigate]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
@@ -48,15 +48,15 @@ function Login() {
       <form onSubmit={handleSubmit(onLoginFormSubmit)}>
         <div className="form-group">
           <label>Email Address</label>
-          <input 
-            type="email" 
-            {...register("email", { required: true })} 
-            className="modern-input" 
-            placeholder="Enter your email" 
+          <input
+            type="email"
+            {...register("email", { required: true })}
+            className="modern-input"
+            placeholder="Enter your email"
           />
           {errors.email?.type === "required" && <span className="text-danger">Email is required</span>}
         </div>
-        
+
         <div className="form-group">
           <label>Password</label>
           <input
@@ -72,15 +72,15 @@ function Login() {
             <Link to="/forgot-password" style={{ fontSize: '0.85rem' }}>Forgot password?</Link>
           </div>
         </div>
-        
+
         <button type="submit" className="modern-btn" style={{ width: '100%', marginTop: '10px' }}>
           <LogIn size={20} /> Login
         </button>
       </form>
-      
+
       <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.9rem' }}>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Don't have an account? <Link to="/register">Register here</Link>
+          Don't have an account? <Link to="/register">Register</Link>
         </p>
       </div>
     </motion.div>
