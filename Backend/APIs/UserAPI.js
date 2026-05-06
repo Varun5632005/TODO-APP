@@ -141,7 +141,9 @@ userRoute.post("/forgot-password", async (req, res) => {
 
     try {
       const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS
@@ -155,12 +157,13 @@ userRoute.post("/forgot-password", async (req, res) => {
         html: message,
       });
 
-      res.status(200).json({ message: "Email sent" });
+      res.status(200).json({ message: "Email sent successfully!" });
     } catch (err) {
+      console.error("Nodemailer error: ", err);
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
       await user.save();
-      return res.status(500).json({ message: "Email could not be sent" });
+      return res.status(500).json({ message: `Email failed: ${err.message}` });
     }
   } catch (err) {
     res.status(500).json({ message: err.message });
