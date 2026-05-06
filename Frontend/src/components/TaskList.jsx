@@ -14,6 +14,10 @@ function TaskList() {
   const { currentUser, setCurrentUser } = useContext(loginContextObj);
   const { register, handleSubmit, setValue } = useForm();
 
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+
   //modal state
   const [modalState, setModalState] = useState(false);
   const [taskBeingEdited, setTaskBeingEdited] = useState(null);
@@ -87,6 +91,13 @@ function TaskList() {
     }
   }, [currentUser?._id, setCurrentUser]);
 
+  const filteredTodos = currentUser?.todos?.filter(todo => {
+    const matchesSearch = todo.taskName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          todo.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === 'all' ? true : todo.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) || [];
+
   if (!currentUser?.todos || currentUser.todos.length === 0) {
     return (
       <motion.div 
@@ -103,16 +114,37 @@ function TaskList() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2 style={{ fontSize: '1.5rem', margin: 0 }}>Your Tasks</h2>
-        <span style={{ background: 'rgba(99, 102, 241, 0.2)', color: 'var(--primary-color)', padding: '4px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600 }}>
-          {currentUser.todos.length} Total
-        </span>
+        
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', flex: '1 1 auto', justifyContent: 'flex-end' }}>
+          <input 
+            type="text" 
+            placeholder="Search tasks..." 
+            className="modern-input" 
+            style={{ width: 'auto', flex: '1 1 150px', maxWidth: '250px', padding: '8px 12px', fontSize: '0.9rem' }}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <select 
+            className="modern-input" 
+            style={{ width: 'auto', padding: '8px 12px', fontSize: '0.9rem' }}
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+          <span style={{ background: 'rgba(99, 102, 241, 0.2)', color: 'var(--primary-color)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+            {filteredTodos.length} Tasks
+          </span>
+        </div>
       </div>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         <AnimatePresence>
-          {currentUser.todos.map((todoObj) => (
+          {filteredTodos.length > 0 ? filteredTodos.map((todoObj) => (
             <TaskItem 
               key={todoObj._id}
               todoObj={todoObj}
@@ -120,7 +152,11 @@ function TaskList() {
               deleteTask={deleteTask}
               setTaskCompleted={setTaskCompleted}
             />
-          ))}
+          )) : (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+              No tasks match your filters.
+            </div>
+          )}
         </AnimatePresence>
       </div>
 

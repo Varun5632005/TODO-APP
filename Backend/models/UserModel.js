@@ -26,6 +26,8 @@ const userSchema = new Schema(
         notificationSent: { type: Boolean, default: false }
       },
     ],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
   { versionKey: false, timestamps: true, strict: true }
 );

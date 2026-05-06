@@ -26,13 +26,15 @@ const TaskItem = React.memo(({ todoObj, openModal, deleteTask, setTaskCompleted 
       }}
       className="task-card-hover"
     >
-      <div className="task-item-flex" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {todoObj.status === 'completed' ? 
-            <CheckCircle size={20} color="var(--success-color)" /> : 
-            <Circle size={20} color="var(--primary-color)" />
-          }
-          <h3 style={{ margin: 0, fontSize: '1.2rem', textDecoration: todoObj.status === 'completed' ? 'line-through' : 'none' }}>
+      <div className="task-item-flex" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', flex: '1 1 auto', minWidth: '200px' }}>
+          <div style={{ marginTop: '2px' }}>
+            {todoObj.status === 'completed' ? 
+              <CheckCircle size={20} color="var(--success-color)" /> : 
+              <Circle size={20} color="var(--primary-color)" />
+            }
+          </div>
+          <h3 style={{ margin: 0, fontSize: '1.2rem', textDecoration: todoObj.status === 'completed' ? 'line-through' : 'none', wordBreak: 'break-word' }}>
             {todoObj.taskName}
           </h3>
         </div>
@@ -71,7 +73,7 @@ const TaskItem = React.memo(({ todoObj, openModal, deleteTask, setTaskCompleted 
         </span>
       </div>
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginLeft: '30px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginLeft: '30px', gap: '10px' }}>
         <span style={{ 
           display: 'inline-flex', alignItems: 'center', gap: '4px',
           fontSize: '0.8rem', 
@@ -89,7 +91,8 @@ const TaskItem = React.memo(({ todoObj, openModal, deleteTask, setTaskCompleted 
             onClick={() => setTaskCompleted(todoObj._id)}
             style={{ 
               background: 'var(--success-color)', color: 'white', border: 'none', 
-              padding: '6px 12px', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer' 
+              padding: '6px 12px', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Complete Task

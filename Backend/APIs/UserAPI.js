@@ -3,6 +3,8 @@ import express from "express";
 import { hash, compare } from "bcryptjs";
 import { UserModel } from "../models/UserModel.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
 const { sign } = jwt;
 export const userRoute = express.Router();
 
@@ -76,9 +78,123 @@ userRoute.get("/logout", (req, res) => {
   res.status(200).json({ message: "Logout success" });
 });
 
+// Update Profile Route
+userRoute.put("/update-profile/:userid", async (req, res) => {
+  try {
+    const { name } = req.body;
+    let updatedUser = await UserModel.findOneAndUpdate(
+      { _id: req.params.userid },
+      { $set: { name } },
+      { new: true }
+    ).select("-password");
+    res.status(200).json({ message: "Profile updated", payload: updatedUser });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
+// Delete User Route
+userRoute.delete("/user/:userid", async (req, res) => {
+  try {
+    await UserModel.findByIdAndDelete(req.params.userid);
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true 
+    });
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
+//Route for Forgot Password
+userRoute.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found with this email" });
+    }
 
+    // Generate token
+    const resetToken = crypto.randomBytes(20).toString("hex");
+
+    // Hash token and set to resetPasswordToken field
+    user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+    await user.save();
+
+    // Create reset url
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+    const message = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="color: #6366f1;">Password Reset Request</h2>
+        <p>You requested a password reset. Please click the link below to reset your password. This link is valid for 15 minutes.</p>
+        <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #6366f1; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a>
+        <p>If you did not request this, please ignore this email.</p>
+      </div>
+    `;
+
+    try {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        }
+      });
+
+      await transporter.sendMail({
+        to: user.email,
+        from: `"TaskMaster Support" <${process.env.EMAIL_USER}>`,
+        subject: "Password Reset Request",
+        html: message,
+      });
+
+      res.status(200).json({ message: "Email sent" });
+    } catch (err) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save();
+      return res.status(500).json({ message: "Email could not be sent" });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+//Route for Reset Password
+userRoute.put("/reset-password/:resetToken", async (req, res) => {
+  try {
+    // Get hashed token
+    const resetPasswordToken = crypto.createHash("sha256").update(req.params.resetToken).digest("hex");
+
+    const user = await UserModel.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    // Set new password
+    const newPassword = await hash(req.body.password, 12);
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successful" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 //Route to add new todo
 userRoute.put("/todo/:userid", async (req, res) => {

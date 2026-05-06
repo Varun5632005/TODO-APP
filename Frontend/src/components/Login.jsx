@@ -77,6 +77,9 @@ function Login() {
         <p style={{ color: 'var(--text-secondary)' }}>
           Don't have an account? <Link to="/register">Register here</Link>
         </p>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '10px' }}>
+          Forgot your password? <Link to="/forgot-password">Reset here</Link>
+        </p>
       </div>
     </motion.div>
   );
