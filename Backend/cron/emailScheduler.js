@@ -5,12 +5,13 @@ import 'dotenv/config';
 import https from 'https';
 import http from 'http';
 
-// Setup nodemailer transport
+// Setup nodemailer transport with SendGrid (Production Level)
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.sendgrid.net',
+  port: 587,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: 'apikey', // This is always the string 'apikey' for SendGrid
+    pass: process.env.SENDGRID_API_KEY
   }
 });
 
