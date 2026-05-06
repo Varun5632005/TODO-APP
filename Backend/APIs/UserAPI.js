@@ -142,8 +142,8 @@ userRoute.post("/forgot-password", async (req, res) => {
     try {
       const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
+        port: 587,
+        secure: false,
         connectionTimeout: 5000,
         greetingTimeout: 5000,
         socketTimeout: 5000,
