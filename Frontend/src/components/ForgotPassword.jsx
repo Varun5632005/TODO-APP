@@ -15,7 +15,7 @@ function ForgotPassword() {
   const onSubmit = async (data) => {
     try {
       setIsLoading(true);
-      const res = await axios.post(`${API}/user-api/forgot-password`, data, { timeout: 15000 });
+      const res = await axios.post(`${API}/user-api/forgot-password`, data, { timeout: 120000 });
       toast.success(res.data.message || "Reset link sent to your email!");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to send reset email");
