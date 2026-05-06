@@ -37,13 +37,13 @@ userRoute.post("/login", async (req, res) => {
     let userInDb = await UserModel.findOne({ email: credObj.email });
     //if user not found
     if (userInDb === null) {
-      res.status(404).json({ message: "Invalid Email" });
+      res.status(404).json({ message: "You are not registered. Please register to login." });
     } else {
       //compare password
       let isEqual = await compare(credObj.password, userInDb.password);
       //if passwords not matched
       if (isEqual === false) {
-        res.status(404).json({ message: "Invalid password" });
+        res.status(404).json({ message: "Incorrect password. Please try again." });
       } else {
         //generate token
         let encodedToken = sign({ email: userInDb.email }, process.env.JWT_SECRET || "abcdef", { expiresIn: "1h" });
