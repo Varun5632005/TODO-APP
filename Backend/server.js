@@ -70,6 +70,11 @@ async function connectDBAndStartServer() {
 connectDBAndStartServer();
 
 
+// Health check / keep-alive ping route
+app.get("/ping", (req, res) => {
+  res.status(200).json({ message: "pong" });
+});
+
 //page refresh route
 
 app.get("/refresh",verifyToken,async (req,res)=>{

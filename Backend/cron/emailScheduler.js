@@ -2,6 +2,8 @@ import cron from 'node-cron';
 import nodemailer from 'nodemailer';
 import { UserModel } from '../models/UserModel.js';
 import 'dotenv/config';
+import https from 'https';
+import http from 'http';
 
 // Setup nodemailer transport
 const transporter = nodemailer.createTransport({
@@ -95,6 +97,26 @@ const startEmailScheduler = () => {
     }
   });
   console.log('Email scheduler started.');
+
+  // ── Keep-alive ping (Render free tier) ──────────────────────────────────────
+  // Render exposes RENDER_EXTERNAL_URL automatically on every service.
+  // We ping our own /ping endpoint every 10 minutes so the dyno never idles.
+  const selfUrl = process.env.RENDER_EXTERNAL_URL;
+  if (selfUrl) {
+    cron.schedule('*/10 * * * *', () => {
+      const pingUrl = `${selfUrl}/ping`;
+      const client = pingUrl.startsWith('https') ? https : http;
+      client.get(pingUrl, (res) => {
+        console.log(`[keep-alive] pinged ${pingUrl} → ${res.statusCode}`);
+      }).on('error', (err) => {
+        console.error('[keep-alive] ping failed:', err.message);
+      });
+    });
+    console.log(`Keep-alive scheduler started → will ping ${selfUrl}/ping every 10 min.`);
+  } else {
+    console.log('Keep-alive skipped: RENDER_EXTERNAL_URL not set (local dev).');
+  }
+  // ────────────────────────────────────────────────────────────────────────────
 };
 
 export default startEmailScheduler;
