@@ -140,25 +140,29 @@ userRoute.post("/forgot-password", async (req, res) => {
     `;
 
     try {
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.sendgrid.net',
-        port: 587,
-        auth: {
-          user: 'apikey',
-          pass: process.env.SENDGRID_API_KEY
-        }
+      const sendGridData = {
+        personalizations: [{ to: [{ email: user.email }] }],
+        from: { email: process.env.EMAIL_USER, name: "TaskMaster Support" },
+        subject: "Password Reset Request",
+        content: [{ type: "text/html", value: message }]
+      };
+
+      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(sendGridData)
       });
 
-      await transporter.sendMail({
-        to: user.email,
-        from: `"TaskMaster Support" <${process.env.EMAIL_USER}>`,
-        subject: "Password Reset Request",
-        html: message,
-      });
+      if (!response.ok) {
+        throw new Error(`SendGrid Web API Error: ${await response.text()}`);
+      }
 
       res.status(200).json({ message: "Email sent successfully!" });
     } catch (err) {
-      console.error("Nodemailer error: ", err);
+      console.error("Email sending error: ", err);
       // SUBMISSION SAVIOR: If email fails due to Render block, still allow the user to reset
       // This ensures the project demonstration never "fails"
       res.status(200).json({ 
@@ -175,24 +179,30 @@ userRoute.post("/forgot-password", async (req, res) => {
 userRoute.post("/send-test-email", async (req, res) => {
   try {
     const { email } = req.body;
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.sendgrid.net',
-      port: 587,
-      auth: {
-        user: 'apikey',
-        pass: process.env.SENDGRID_API_KEY
-      }
+    
+    const sendGridData = {
+      personalizations: [{ to: [{ email: email }] }],
+      from: { email: process.env.EMAIL_USER, name: "TaskMaster" },
+      subject: "Test Email from TaskMaster",
+      content: [{ type: "text/plain", value: "If you are reading this, your email system is working perfectly! Your reminders will now arrive as scheduled." }]
+    };
+
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(sendGridData)
     });
 
-    await transporter.sendMail({
-      to: email,
-      from: `"TaskMaster" <${process.env.EMAIL_USER}>`,
-      subject: "Test Email from TaskMaster",
-      text: "If you are reading this, your email system is working perfectly! Your reminders will now arrive as scheduled.",
-    });
+    if (!response.ok) {
+      throw new Error(`SendGrid Error: ${await response.text()}`);
+    }
 
     res.status(200).json({ message: "Test email sent successfully!" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: `Test email failed: ${err.message}` });
   }
 });

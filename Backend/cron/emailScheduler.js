@@ -58,28 +58,45 @@ const startEmailScheduler = () => {
             // Calculate exact minutes left
             const minutesLeft = Math.round((todo.dueDate - now) / 60000);
 
-            // Send email
-            const mailOptions = {
-              from: `"TaskMaster" <${process.env.EMAIL_USER}>`,
-              to: user.email,
+            // Use SendGrid Web API (HTTPS bypasses Render's SMTP port blocking)
+            const sendGridData = {
+              personalizations: [{ to: [{ email: user.email }] }],
+              from: { email: process.env.EMAIL_USER, name: "TaskMaster" },
               subject: `Reminder: Task "${todo.taskName}" starts in ${minutesLeft} minutes!`,
-              html: `
+              content: [{
+                type: "text/html", 
+                value: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
                   <h2 style="color: #6366f1;">TaskMaster Reminder ⏰</h2>
-                  <p>Hi ${user.name},</p>
-                  <p>This is a friendly reminder that your task is starting soon.</p>
-                  <div style="background: #f8fafc; padding: 15px; border-left: 4px solid #6366f1; margin: 20px 0;">
-                    <h3 style="margin: 0 0 10px 0;">${todo.taskName}</h3>
-                    <p style="margin: 0;"><strong>Description:</strong> ${todo.description}</p>
-                    <p style="margin: 10px 0 0 0;"><strong>Due:</strong> ${todo.dueDate.toLocaleString()}</p>
+                  <p>Hello <strong>${user.name}</strong>,</p>
+                  <p>This is a reminder that your task is starting very soon!</p>
+                  <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #6366f1; margin: 20px 0;">
+                    <h3 style="margin: 0 0 10px 0; color: #1f2937;">📌 ${todo.taskName}</h3>
+                    <p style="margin: 0; color: #4b5563;"><strong>Due:</strong> ${new Date(todo.dueDate).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+                    <p style="margin: 10px 0 0 0; color: #d97706; font-weight: bold;">Starts in exactly ${minutesLeft} minutes!</p>
                   </div>
-                  <p>Log in to TaskMaster to mark it as completed!</p>
+                  <p>Log in to your TaskMaster dashboard to complete it.</p>
+                  <a href="${process.env.RENDER_EXTERNAL_URL || 'http://localhost:5173'}" style="display: inline-block; padding: 10px 20px; background-color: #6366f1; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Open TaskMaster</a>
                 </div>
-              `
+              `}]
             };
 
-            await transporter.sendMail(mailOptions);
-            console.log(`Email sent to ${user.email} for task ${todo.taskName}`);
+            const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(sendGridData)
+            });
+
+            if (!response.ok) {
+               const errText = await response.text();
+               console.error(`SendGrid failed: ${errText}`);
+               continue; // skip marking as sent if failed
+            }
+
+            console.log(`[${new Date().toISOString()}] Reminder email sent to ${user.email} for task "${todo.taskName}"`);
 
             // Mark as sent
             todo.notificationSent = true;
