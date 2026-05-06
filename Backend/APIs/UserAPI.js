@@ -142,7 +142,6 @@ userRoute.post("/forgot-password", async (req, res) => {
     try {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
-        pool: true, // Use pooling to bypass aggressive firewall blocks
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS
