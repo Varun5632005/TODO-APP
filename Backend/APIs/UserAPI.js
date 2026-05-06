@@ -168,6 +168,31 @@ userRoute.post("/forgot-password", async (req, res) => {
   }
 });
 
+// Route to send a test email
+userRoute.post("/send-test-email", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      to: email,
+      from: `"TaskMaster" <${process.env.EMAIL_USER}>`,
+      subject: "Test Email from TaskMaster",
+      text: "If you are reading this, your email system is working perfectly! Your reminders will now arrive as scheduled.",
+    });
+
+    res.status(200).json({ message: "Test email sent successfully!" });
+  } catch (err) {
+    res.status(500).json({ message: `Test email failed: ${err.message}` });
+  }
+});
+
 //Route for Reset Password
 userRoute.put("/reset-password/:resetToken", async (req, res) => {
   try {

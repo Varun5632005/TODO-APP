@@ -1,4 +1,4 @@
-import { useContext, useState, useCallback } from "react";
+import { useContext, useState, useCallback, useEffect, useRef } from "react";
 import { loginContextObj } from "../contexts/LoginContext";
 import axios from "axios";
 import { Modal } from "react-bootstrap";
@@ -21,6 +21,48 @@ function TaskList() {
   //modal state
   const [modalState, setModalState] = useState(false);
   const [taskBeingEdited, setTaskBeingEdited] = useState(null);
+
+  // Reminder Logic: Check for upcoming tasks every minute
+  const alertedTasks = useRef(new Set());
+  
+  useEffect(() => {
+    const checkReminders = () => {
+      if (!currentUser?.todos) return;
+      
+      const now = new Date();
+      const tenMinutesFromNow = new Date(now.getTime() + 10 * 60000);
+      
+      currentUser.todos.forEach(todo => {
+        if (todo.status === 'pending' && todo.dueDate) {
+          const dueDate = new Date(todo.dueDate);
+          
+          // If due in next 10 mins and not already alerted this session
+          if (dueDate > now && dueDate <= tenMinutesFromNow && !alertedTasks.current.has(todo._id)) {
+            const minutesLeft = Math.round((dueDate - now) / 60000);
+            
+            toast(`Reminder: "${todo.taskName}" is due in ${minutesLeft} minutes!`, {
+              icon: '⏰',
+              duration: 10000,
+              style: {
+                borderRadius: '10px',
+                background: '#1e293b',
+                color: '#fff',
+                border: '1px solid var(--primary-color)'
+              },
+            });
+            
+            alertedTasks.current.add(todo._id);
+          }
+        }
+      });
+    };
+
+    // Initial check
+    checkReminders();
+    // Run every 60 seconds
+    const interval = setInterval(checkReminders, 60000);
+    return () => clearInterval(interval);
+  }, [currentUser?.todos]);
 
   const openModal = useCallback((taskObj) => {
     setModalState(true);
@@ -139,6 +181,21 @@ function TaskList() {
             <option value="pending">Pending</option>
             <option value="completed">Completed</option>
           </select>
+          <button 
+            onClick={async () => {
+              try {
+                toast.loading("Sending test email...", { id: 'test-email' });
+                await axios.post(`${API}/user-api/send-test-email`, { email: currentUser.email });
+                toast.success("Test email sent! Check your inbox.", { id: 'test-email' });
+              } catch (err) {
+                toast.error("Email failed. Check Render Environment Variables.", { id: 'test-email' });
+              }
+            }}
+            className="modern-btn-outline" 
+            style={{ height: '38px', padding: '0 16px', fontSize: '0.85rem' }}
+          >
+            Test Email
+          </button>
           <span style={{ display: 'flex', alignItems: 'center', height: '38px', background: 'rgba(99, 102, 241, 0.2)', color: 'var(--primary-color)', padding: '0 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
             {filteredTodos.length} Tasks
           </span>
