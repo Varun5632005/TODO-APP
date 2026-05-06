@@ -19,6 +19,9 @@ function CreateTask() {
 
   const onSubmitNewTask = async (newTask) => {
     try {
+      if (newTask.dueDate) {
+        newTask.dueDate = new Date(newTask.dueDate).toISOString();
+      }
       let res = await axios.put(`${API}/user-api/todo/${currentUser._id}`, newTask, {
         withCredentials: true,
       });

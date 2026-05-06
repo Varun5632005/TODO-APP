@@ -7,8 +7,14 @@ const TaskItem = React.memo(({ todoObj, openModal, deleteTask, setTaskCompleted 
   const isOverdue = todoObj.dueDate && new Date(todoObj.dueDate) < new Date() && todoObj.status !== 'completed';
   
   // Format dates
-  const createdDate = new Date(todoObj.createdAt).toLocaleDateString();
-  const dueDate = todoObj.dueDate ? new Date(todoObj.dueDate).toLocaleDateString() : 'No due date';
+  const createdDate = new Date(todoObj.createdAt).toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+  const dueDate = todoObj.dueDate 
+    ? new Date(todoObj.dueDate).toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      }) 
+    : 'No due date';
 
   return (
     <motion.div 

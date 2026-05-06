@@ -46,6 +46,9 @@ function TaskList() {
   //save modified task
   const saveModifiedTask = useCallback(async (modifiedTaskObj) => {
     try {
+      if (modifiedTaskObj.dueDate) {
+        modifiedTaskObj.dueDate = new Date(modifiedTaskObj.dueDate).toISOString();
+      }
       let res = await axios.put(
         `${API}/user-api/edit-todo/userid/${currentUser._id}/taskid/${taskBeingEdited._id}`,
         modifiedTaskObj,
