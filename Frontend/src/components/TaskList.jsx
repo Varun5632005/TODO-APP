@@ -125,13 +125,13 @@ function TaskList() {
             type="text" 
             placeholder="Search tasks..." 
             className="modern-input" 
-            style={{ width: 'auto', flex: '1 1 150px', maxWidth: '250px', padding: '8px 12px', fontSize: '0.9rem' }}
+            style={{ margin: 0, height: '38px', width: 'auto', flex: '1 1 150px', maxWidth: '250px', padding: '0 12px', fontSize: '0.9rem' }}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <select 
             className="modern-input" 
-            style={{ width: 'auto', padding: '8px 12px', fontSize: '0.9rem' }}
+            style={{ margin: 0, height: '38px', width: 'auto', padding: '0 30px 0 12px', fontSize: '0.9rem' }}
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
@@ -139,7 +139,7 @@ function TaskList() {
             <option value="pending">Pending</option>
             <option value="completed">Completed</option>
           </select>
-          <span style={{ background: 'rgba(99, 102, 241, 0.2)', color: 'var(--primary-color)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+          <span style={{ display: 'flex', alignItems: 'center', height: '38px', background: 'rgba(99, 102, 241, 0.2)', color: 'var(--primary-color)', padding: '0 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
             {filteredTodos.length} Tasks
           </span>
         </div>

@@ -65,7 +65,12 @@ function Login() {
             className="modern-input"
             placeholder="Enter your password"
           />
-          {errors.password?.type === "required" && <span className="text-danger">Password is required</span>}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+            <div>
+              {errors.password?.type === "required" && <span className="text-danger" style={{ marginTop: 0 }}>Password is required</span>}
+            </div>
+            <Link to="/forgot-password" style={{ fontSize: '0.85rem' }}>Forgot password?</Link>
+          </div>
         </div>
         
         <button type="submit" className="modern-btn" style={{ width: '100%', marginTop: '10px' }}>
@@ -76,9 +81,6 @@ function Login() {
       <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.9rem' }}>
         <p style={{ color: 'var(--text-secondary)' }}>
           Don't have an account? <Link to="/register">Register here</Link>
-        </p>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '10px' }}>
-          Forgot your password? <Link to="/forgot-password">Reset here</Link>
         </p>
       </div>
     </motion.div>
